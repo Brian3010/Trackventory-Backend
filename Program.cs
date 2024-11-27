@@ -2,12 +2,13 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using trackventory_backend.Data;
+using trackventory_backend.Seed;
 
 namespace trackventory_backend
 {
   public class Program
   {
-    public static void Main(string[] args) {
+    public static async Task Main(string[] args) {
       var builder = WebApplication.CreateBuilder(args);
 
       // Add services to the container.
@@ -41,16 +42,16 @@ namespace trackventory_backend
         app.UseSwaggerUI();
       }
 
-      //// Invoke the seed data
-      //using (var scope = app.Services.CreateScope()) {
-      //  var services = scope.ServiceProvider;
-      //  try {
-      //    await SeedAuthData.InitializeAsync(services);
-      //  } catch (Exception ex) {
-      //    var logger = services.GetRequiredService<ILogger<Program>>();
-      //    logger.LogError(ex, "An error occurred while seeding the database.");
-      //  }
-      //}
+      // Invoke the seed data -> run on the first build to seed users and roles
+      using (var scope = app.Services.CreateScope()) {
+        var services = scope.ServiceProvider;
+        try {
+          await SeedAuthData.InitializeAsync(services);
+        } catch (Exception ex) {
+          var logger = services.GetRequiredService<ILogger<Program>>();
+          logger.LogError(ex, "An error occurred while seeding the database.");
+        }
+      }
 
       app.UseHttpsRedirection();
 
