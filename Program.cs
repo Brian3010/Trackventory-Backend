@@ -24,11 +24,10 @@ namespace trackventory_backend
       // Add Identity system to the ASP.NET Core service container
       builder.Services.AddIdentityCore<IdentityUser>()
         .AddRoles<IdentityRole>()
-        //.AddTokenProvider<DataProtectorTokenProvider<IdentityUser>>("Trackventory")
-        .AddEntityFrameworkStores<TrackventoryAuthDbContext>()
-        .AddDefaultTokenProviders();
+        .AddEntityFrameworkStores<TrackventoryAuthDbContext>();
 
 
+      // Configure identity options
       builder.Services.Configure<IdentityOptions>(options => {
         options.User.RequireUniqueEmail = true;
         options.Password.RequiredLength = 6;
@@ -42,10 +41,21 @@ namespace trackventory_backend
         app.UseSwaggerUI();
       }
 
+      //// Invoke the seed data
+      //using (var scope = app.Services.CreateScope()) {
+      //  var services = scope.ServiceProvider;
+      //  try {
+      //    await SeedAuthData.InitializeAsync(services);
+      //  } catch (Exception ex) {
+      //    var logger = services.GetRequiredService<ILogger<Program>>();
+      //    logger.LogError(ex, "An error occurred while seeding the database.");
+      //  }
+      //}
+
       app.UseHttpsRedirection();
 
       app.UseAuthorization();
-      app.UseAuthentication();
+      //app.UseAuthentication();
 
 
       app.MapControllers();
