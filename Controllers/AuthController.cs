@@ -30,7 +30,11 @@ namespace trackventory_backend.Controllers
 
       // Generate access token
       var accessToken = _jwtTokenManager.GenerateJwtToken(user, roles.ToList(), TTLInMinutes);
+      // Generate refresh token
+      var refreshToken = _jwtTokenManager.GenerateRefreshToken();
 
+      // Store refresh token in cookie
+      int CookieExpiredTime = 10080; // 1 week
 
       // Create a response
       var response = new {
@@ -41,6 +45,13 @@ namespace trackventory_backend.Controllers
       };
 
       return Ok(response);
+    }
+
+    [HttpPost("logout")]
+    public async Task<IActionResult> Logout() {
+
+
+      return Ok();
     }
 
   }
