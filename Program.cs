@@ -1,8 +1,11 @@
 
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using trackventory_backend.Configurations;
 using trackventory_backend.Data;
 using trackventory_backend.Seed;
+using trackventory_backend.Services;
 
 namespace trackventory_backend
 {
@@ -22,6 +25,9 @@ namespace trackventory_backend
       // Add Db Connection
       builder.Services.AddDbContext<TrackventoryAuthDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("TrackventoryAuthConnection")));
 
+      // Add life-time services
+      builder.Services.AddScoped<JwtTokenManager>();
+
       // Add Identity system to the ASP.NET Core service container
       builder.Services.AddIdentityCore<IdentityUser>()
         .AddRoles<IdentityRole>()
@@ -33,6 +39,10 @@ namespace trackventory_backend
         options.User.RequireUniqueEmail = true;
         options.Password.RequiredLength = 6;
       });
+
+      // Add JWT
+      builder.Services.ConfigureOptions<JwtBearerConfigurationOptions>().AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer();
+
 
       var app = builder.Build();
 
@@ -55,8 +65,9 @@ namespace trackventory_backend
 
       app.UseHttpsRedirection();
 
-      app.UseAuthorization();
-      //app.UseAuthentication();
+      // Add middleware
+      app.UseAuthentication(); // Enable authentication middleware
+      app.UseAuthorization();  // Enable authorization middleware
 
 
       app.MapControllers();
