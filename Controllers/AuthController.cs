@@ -50,6 +50,7 @@ namespace trackventory_backend.Controllers
     [HttpPost("logout")]
     public async Task<IActionResult> Logout() {
 
+      /// Need to finish <see cref="CookieManager"/> first
 
       return Ok();
     }
