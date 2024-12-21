@@ -12,17 +12,50 @@ namespace trackventory_backend.Controllers
   public class AuthController : ControllerBase
   {
     private readonly UserManager<IdentityUser> _userManager;
+    private readonly RoleManager<IdentityRole> _roleManager;
     private readonly JwtTokenManager _jwtTokenManager;
     private readonly ICustomCookieManager _cookieManager;
     private readonly ILogger<AuthController> _logger;
 
-    public AuthController(UserManager<IdentityUser> userManager, JwtTokenManager jwtTokenManager, ICustomCookieManager cookieManager, ILogger<AuthController> logger) {
+    public AuthController(UserManager<IdentityUser> userManager, RoleManager<IdentityRole> roleManager, JwtTokenManager jwtTokenManager, ICustomCookieManager cookieManager, ILogger<AuthController> logger) {
       _userManager = userManager;
+      _roleManager = roleManager;
       _jwtTokenManager = jwtTokenManager;
       _cookieManager = cookieManager;
       _logger = logger;
     }
 
+    [HttpPost("register")]
+    public async Task<IActionResult> Register(RegisterRequestDto registerRequestDto) {
+
+      // Check matching passwords
+      if (registerRequestDto.Password != registerRequestDto.ConfirmPassword) {
+        return BadRequest("Password and Confirm Password does not match");
+      }
+
+
+      var newUser = new IdentityUser() {
+        UserName = registerRequestDto.Email,
+        Email = registerRequestDto.Email,
+      };
+
+      // Check if role exist
+      foreach (string role in registerRequestDto.Roles!) {
+        if (!await _roleManager.RoleExistsAsync(role)) {
+          return BadRequest($"Role '{role}' does not exist.");
+        }
+      }
+
+      // Register user
+      var identityResult = await _userManager.CreateAsync(newUser, registerRequestDto.Password);
+
+      if (!identityResult.Succeeded) {
+        return BadRequest(identityResult.Errors);
+      }
+
+
+      return Ok("Registered succesffully");
+    }
 
     [HttpGet("refresh-token")]
     public async Task<IActionResult> RefreshAccessToken() {
@@ -58,6 +91,7 @@ namespace trackventory_backend.Controllers
       };
       return Ok(response);
     }
+
 
 
     [HttpPost("login")]
