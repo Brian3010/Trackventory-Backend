@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using trackventory_backend.Models;
 
 namespace trackventory_backend.Data
 {
@@ -13,8 +14,16 @@ namespace trackventory_backend.Data
 
     }
 
+    public DbSet<RefreshTokens> RefreshTokens { get; set; }
     protected override void OnModelCreating(ModelBuilder builder) {
       base.OnModelCreating(builder);
+
+      // Configure foreign key relationship
+      builder.Entity<RefreshTokens>()
+        .HasOne(rt => rt.User)
+        .WithMany()
+        .HasForeignKey(rt => rt.UserId)
+        .OnDelete(DeleteBehavior.Cascade);
 
       // Add roles
       var adminRoleId = "04b15aeb-6e4a-4f1b-b385-f62377058a51";

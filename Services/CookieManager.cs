@@ -1,14 +1,13 @@
-﻿
-using Microsoft.Net.Http.Headers;
+﻿using trackventory_backend.Services.Interfaces;
 
 namespace trackventory_backend.Services
 {
-  public class CookieManager
+  public class CookieManager : ICustomCookieManager
   {
     private readonly HttpContext _httpContext;
 
-    public CookieManager(HttpContext httpContext) {
-      _httpContext = httpContext;
+    public CookieManager(IHttpContextAccessor httpContextAccessor) {
+      _httpContext = httpContextAccessor.HttpContext ?? throw new ArgumentNullException(nameof(httpContextAccessor)); ;
     }
 
     // check exist (private)
@@ -17,7 +16,8 @@ namespace trackventory_backend.Services
     // Add cookie
 
     public void AddCookie(string key, string value, int ExpiredTimeInMinutes) {
-      var cookie = new CookieHeaderValue(key, value);
+      //var cookie = new CookieHeaderValue(key, value);
+      //if (CookieExists("DeviceId")) return;
 
       var cookieOptions = new CookieOptions {
         HttpOnly = true,
@@ -39,10 +39,10 @@ namespace trackventory_backend.Services
 
 
     // list cookie
-    public IEnumerable<Object> ListCookies() {
+    public IEnumerable<KeyValuePair<string, string>> ListCookies() {
       var cookies = _httpContext.Request.Cookies;
 
-      return cookies.Select(c => new { Name = c.Key, Value = c.Value });
+      return cookies.Select(c => new KeyValuePair<string, string>(c.Key, c.Value));
 
     }
 

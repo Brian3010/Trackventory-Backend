@@ -2,10 +2,13 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.OpenApi.Models;
+using Serilog;
 using trackventory_backend.Configurations;
 using trackventory_backend.Data;
 using trackventory_backend.Seed;
 using trackventory_backend.Services;
+using trackventory_backend.Services.Interfaces;
 
 namespace trackventory_backend
 {
@@ -14,11 +17,45 @@ namespace trackventory_backend
     public static async Task Main(string[] args) {
       var builder = WebApplication.CreateBuilder(args);
 
+      // Add Serilog
+      var logger = new LoggerConfiguration().WriteTo
+        .Console(outputTemplate:
+        "{NewLine}[{Timestamp:HH:mm}] {Message:lj}{NewLine}{Exception}")
+        .MinimumLevel.Information()
+        .MinimumLevel.Override("Microsoft", Serilog.Events.LogEventLevel.Warning) // Suppress Microsoft logs below Warning
+        .MinimumLevel.Override("System", Serilog.Events.LogEventLevel.Warning) // Suppress System logs below Warning
+        .CreateLogger();
+
+      builder.Logging.ClearProviders();
+      builder.Logging.AddSerilog(logger);
+      logger.Information("Serilog starting");
+      logger.Information($"Total services: {builder.Services.Count}");
+
       // Add services to the container.
       builder.Services.AddControllers();
       // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
       builder.Services.AddEndpointsApiExplorer();
-      builder.Services.AddSwaggerGen();
+      builder.Services.AddSwaggerGen(options => {
+        options.SwaggerDoc("v1", new OpenApiInfo { Title = "RestroFlow APIs", Version = "V1" });
+        options.AddSecurityDefinition(JwtBearerDefaults.AuthenticationScheme, new OpenApiSecurityScheme {
+          Name = "Authorization",
+          Description = "Enter 'Bearer' following by space and JWT.",
+          In = ParameterLocation.Header,
+          Type = SecuritySchemeType.ApiKey,
+          Scheme = "bearer",
+        });
+        options.AddSecurityRequirement(new OpenApiSecurityRequirement {
+          {
+            new OpenApiSecurityScheme {
+              Reference = new OpenApiReference{Type = ReferenceType.SecurityScheme, Id = JwtBearerDefaults.AuthenticationScheme },
+              Scheme ="Oauth2",
+              Name = JwtBearerDefaults.AuthenticationScheme,
+              In = ParameterLocation.Header
+            },
+             new List<string>()
+          }
+        });
+      });
 
 
 
@@ -26,7 +63,9 @@ namespace trackventory_backend
       builder.Services.AddDbContext<TrackventoryAuthDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("TrackventoryAuthConnection")));
 
       // Add life-time services
+      builder.Services.AddHttpContextAccessor();
       builder.Services.AddScoped<JwtTokenManager>();
+      builder.Services.AddScoped<ICustomCookieManager, CookieManager>();
 
       // Add Identity system to the ASP.NET Core service container
       builder.Services.AddIdentityCore<IdentityUser>()
@@ -58,8 +97,8 @@ namespace trackventory_backend
         try {
           await SeedAuthData.InitializeAsync(services);
         } catch (Exception ex) {
-          var logger = services.GetRequiredService<ILogger<Program>>();
-          logger.LogError(ex, "An error occurred while seeding the database.");
+          //var logger = services.GetRequiredService<ILogger<Program>>();
+          logger.Information(ex, "An error occurred while seeding the database.");
         }
       }
 

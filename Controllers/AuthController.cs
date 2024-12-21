@@ -1,7 +1,9 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using trackventory_backend.Dtos;
 using trackventory_backend.Services;
+using trackventory_backend.Services.Interfaces;
 
 namespace trackventory_backend.Controllers
 {
@@ -11,11 +13,52 @@ namespace trackventory_backend.Controllers
   {
     private readonly UserManager<IdentityUser> _userManager;
     private readonly JwtTokenManager _jwtTokenManager;
+    private readonly ICustomCookieManager _cookieManager;
+    private readonly ILogger<AuthController> _logger;
 
-    public AuthController(UserManager<IdentityUser> userManager, JwtTokenManager jwtTokenManager) {
+    public AuthController(UserManager<IdentityUser> userManager, JwtTokenManager jwtTokenManager, ICustomCookieManager cookieManager, ILogger<AuthController> logger) {
       _userManager = userManager;
       _jwtTokenManager = jwtTokenManager;
+      _cookieManager = cookieManager;
+      _logger = logger;
     }
+
+
+    [HttpGet("refresh-token")]
+    public async Task<IActionResult> RefreshAccessToken() {
+      var userId = _cookieManager.GetCookie("UserId");
+      var deviceId = _cookieManager.GetCookie("DeviceId");
+      var RfToken = _cookieManager.GetCookie("RfToken");
+
+      if (userId == null || deviceId == null || RfToken == null) return NotFound("Neccessary Cookies Not Found");
+
+      // check valid token
+      var isTokenValid = await _jwtTokenManager.ValidateRefreshTokenAsync(userId, deviceId, RfToken);
+
+      if (!isTokenValid) return NotFound();
+
+      // create new access token and refreshtoken and send back to the client
+      // Search for user
+      var user = await _userManager.FindByIdAsync(userId);
+      if (user == null) return NotFound("User Not Found");
+      var roles = await _userManager.GetRolesAsync(user);
+
+      var accessToken = _jwtTokenManager.GenerateJwtToken(user, roles.ToList());
+      var refreshToken = _jwtTokenManager.GenerateRefreshToken();
+      await _jwtTokenManager.AddOrUpdateRefreshTokenAsync(user.Id, deviceId, refreshToken, DateTime.Now.AddDays(15));
+
+      int CookieExpiredTime = 10080; // 1 week
+      _cookieManager.AddCookie("RfToken", refreshToken, CookieExpiredTime);
+
+      var response = new {
+        AccessToken = accessToken,
+        //RefreshToken = refreshToken,
+        User = new UserDto { Id = user.Id, Email = user.Email, UserName = user.UserName },
+        Roles = roles
+      };
+      return Ok(response);
+    }
+
 
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginRequestDto loginRequest) {
@@ -26,15 +69,22 @@ namespace trackventory_backend.Controllers
       }
 
       var roles = await _userManager.GetRolesAsync(user);
-      int TTLInMinutes = 5;
+      //int TTLInMinutes = 5;
 
       // Generate access token
-      var accessToken = _jwtTokenManager.GenerateJwtToken(user, roles.ToList(), TTLInMinutes);
+      var accessToken = _jwtTokenManager.GenerateJwtToken(user, roles.ToList());
       // Generate refresh token
       var refreshToken = _jwtTokenManager.GenerateRefreshToken();
 
+      // Store refreshtoken in db
+      var deviceId = _cookieManager.GetCookie("DeviceId") ?? Guid.NewGuid().ToString();
+      await _jwtTokenManager.AddOrUpdateRefreshTokenAsync(user.Id, deviceId, refreshToken, DateTime.Now.AddDays(15));
+
       // Store refresh token in cookie
       int CookieExpiredTime = 10080; // 1 week
+      _cookieManager.AddCookie("RfToken", refreshToken, CookieExpiredTime);
+      _cookieManager.AddCookie("DeviceId", deviceId, CookieExpiredTime);
+      _cookieManager.AddCookie("UserId", user.Id, CookieExpiredTime);
 
       // Create a response
       var response = new {
@@ -47,13 +97,22 @@ namespace trackventory_backend.Controllers
       return Ok(response);
     }
 
+    [Authorize]
     [HttpPost("logout")]
     public async Task<IActionResult> Logout() {
 
-      /// Need to finish <see cref="CookieManager"/> first
+      // revoke refresh token
+      var userId = _cookieManager.GetCookie("UserId");
+      var deviceId = _cookieManager.GetCookie("DeviceId");
 
-      return Ok();
+      await _jwtTokenManager.RevokeRefreshTokenAsync(userId, deviceId);
+
+      // clear cookies
+      _cookieManager.DeleteCookie("RfToken");
+
+      return Ok("Logout successfully");
     }
+
 
   }
 }
