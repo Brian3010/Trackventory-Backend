@@ -9,7 +9,7 @@
     public required float Counted { get; set; }
     public required float Quantity { get; set; }
 
-    public required string CountingReasonCode { get; set }
+    public required string CountingReasonCode { get; set; }
     public DateTime UpdatedDate { get; set; }
 
     // FK

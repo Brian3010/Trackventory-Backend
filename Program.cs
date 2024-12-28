@@ -62,6 +62,8 @@ namespace trackventory_backend
       // Add Db Connection
       builder.Services.AddDbContext<TrackventoryAuthDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("TrackventoryAuthConnection")));
 
+      builder.Services.AddDbContext<TrackventoryDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("TrackventoryConnection")));
+
       // Add life-time services
       builder.Services.AddHttpContextAccessor();
       builder.Services.AddScoped<JwtTokenManager>();
