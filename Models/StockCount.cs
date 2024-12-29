@@ -2,7 +2,7 @@
 {
   public class StockCount
   {
-    public Guid Id { get; set; }
+    public required Guid Id { get; set; }
 
     public required float OnHand { get; set; }
 

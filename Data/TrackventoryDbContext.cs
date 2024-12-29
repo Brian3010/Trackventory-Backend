@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using trackventory_backend.Models;
+using trackventory_backend.Seed;
 
 namespace trackventory_backend.Data
 {
@@ -19,12 +20,9 @@ namespace trackventory_backend.Data
       base.OnModelCreating(modelBuilder);
 
       // Seed data
-
-
-
-
-
-
+      modelBuilder.SeedCategory();
+      modelBuilder.SeedProduct();
+      modelBuilder.SeedStockCount();
 
     }
 
