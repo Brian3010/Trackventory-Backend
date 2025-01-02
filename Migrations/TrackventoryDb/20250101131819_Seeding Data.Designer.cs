@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using trackventory_backend.Data;
 
@@ -11,9 +12,11 @@ using trackventory_backend.Data;
 namespace trackventory_backend.Migrations.TrackventoryDb
 {
     [DbContext(typeof(TrackventoryDbContext))]
-    partial class TrackventoryDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250101131819_Seeding Data")]
+    partial class SeedingData
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
