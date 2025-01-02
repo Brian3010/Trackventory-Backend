@@ -6,6 +6,8 @@ using Microsoft.OpenApi.Models;
 using Serilog;
 using trackventory_backend.Configurations;
 using trackventory_backend.Data;
+using trackventory_backend.Repositories;
+using trackventory_backend.Repositories.Interfaces;
 using trackventory_backend.Seed;
 using trackventory_backend.Services;
 using trackventory_backend.Services.Interfaces;
@@ -68,6 +70,7 @@ namespace trackventory_backend
       builder.Services.AddHttpContextAccessor();
       builder.Services.AddScoped<JwtTokenManager>();
       builder.Services.AddScoped<ICustomCookieManager, CookieManager>();
+      builder.Services.AddScoped<IInventoryRepository, SQLInventoryRepository>();
 
       // Add Identity system to the ASP.NET Core service container
       builder.Services.AddIdentityCore<IdentityUser>()

@@ -72,12 +72,12 @@ namespace trackventory_backend.Seed
 
     }
 
-    public static void SeedStockCount(this ModelBuilder modelBuilder) {
+    public static void SeedInventoryCount(this ModelBuilder modelBuilder) {
 
 
-      modelBuilder.Entity<StockCount>().HasData(
+      modelBuilder.Entity<InventoryCount>().HasData(
         // retail count
-        new StockCount {
+        new InventoryCount {
           Id = new Guid("5050a777-032c-4f9b-815d-c0ff65571f27"),
           ProductId = new Guid("5161df48-6b34-496f-9957-61077b79e56c"),
           OnHand = 5.00f,
@@ -88,7 +88,7 @@ namespace trackventory_backend.Seed
           UpdatedDate = new DateTime(2024, 12, 28)
         },
 
-        new StockCount {
+        new InventoryCount {
           Id = new Guid("ff92736d-696e-48a2-b6ad-329df9d14881"),
           ProductId = new Guid("845ee88d-e92f-49fb-8140-18b72ac96631"),
           OnHand = 5.00f,
@@ -101,7 +101,7 @@ namespace trackventory_backend.Seed
 
 
         // Components Count
-        new StockCount {
+        new InventoryCount {
           Id = new Guid("6f138c1d-ee76-4f2d-8d14-49b5377fa3bd"),
           ProductId = new Guid("869ebbb7-8457-40b8-8bba-66b900a56f32"),
           OnHand = 64.62f,
@@ -112,7 +112,7 @@ namespace trackventory_backend.Seed
           UpdatedDate = new DateTime(2024, 12, 28)
         },
 
-        new StockCount {
+        new InventoryCount {
           Id = new Guid("67d55f8b-a78b-4f82-a970-108c5aa46739"),
           ProductId = new Guid("3707d0d7-643d-4c42-9ce5-ad0a32f9d23a"),
           OnHand = 19.71f,

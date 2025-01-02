@@ -1,6 +1,6 @@
 ﻿namespace trackventory_backend.Models
 {
-  public class StockCount
+  public class InventoryCount
   {
     public required Guid Id { get; set; }
 
