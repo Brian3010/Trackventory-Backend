@@ -13,6 +13,8 @@ namespace trackventory_backend.Repositories.Interfaces
 
 
     // Update Items Quantity including "Counted"
+    // "Quality" automitcally calculated ?
+
 
     // Update new item
 
