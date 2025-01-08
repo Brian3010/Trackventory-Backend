@@ -13,6 +13,20 @@ namespace trackventory_backend.Controllers
       _InventoryRepository = InventoryRepository;
     }
 
+    [HttpGet("categories")]
+    public async Task<IActionResult> GetAllCategories() {
+      var categories = await _InventoryRepository.GetAllCategoriesAsync();
+      return Ok(categories);
+    }
+
+    [HttpGet("product/{categoryId:guid}")]
+    public async Task<IActionResult> GetProductsbyCategory([FromRoute] Guid categoryId) {
+      var products = await _InventoryRepository.GetProductByCategoryAsync(categoryId);
+      return Ok(products);
+    }
+
+
+
 
   }
 }
