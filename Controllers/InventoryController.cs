@@ -28,6 +28,13 @@ namespace trackventory_backend.Controllers
       return Ok(products);
     }
 
+    [Authorize]
+    [HttpGet("ProductCount/{categoryId:guid}")]
+    public async Task<IActionResult> GetProductCountByCategory([FromRoute] Guid categoryId) {
+      var productCounts = await _InventoryRepository.GetProductCountByCategoryAsync(categoryId);
+
+      return Ok(productCounts);
+    }
 
 
 

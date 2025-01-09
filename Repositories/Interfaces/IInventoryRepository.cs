@@ -11,10 +11,16 @@ namespace trackventory_backend.Repositories.Interfaces
     // List Items - product id, product names, item number based on category
     Task<List<Product>> GetProductByCategoryAsync(Guid categoryId);
 
+    // List item count by category
+    Task<List<InventoryCount>> GetProductCountByCategoryAsync(Guid categoryId);
+
 
     // Update Items Quantity including "Counted"
-    // "Quality" automitcally calculated ?
+    // "Quantity" automitcally calculated ?
+    Task UpdateProductCountByCategoryAsync(Guid categoryId);
 
+
+    // viewing inventory count
 
     // Update new item
 
