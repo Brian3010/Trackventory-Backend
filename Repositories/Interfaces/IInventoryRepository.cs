@@ -1,4 +1,5 @@
-﻿using trackventory_backend.Models;
+﻿using trackventory_backend.Dtos;
+using trackventory_backend.Models;
 
 namespace trackventory_backend.Repositories.Interfaces
 {
@@ -12,12 +13,12 @@ namespace trackventory_backend.Repositories.Interfaces
     Task<List<Product>> GetProductByCategoryAsync(Guid categoryId);
 
     // List item count by category
-    Task<List<InventoryCount>> GetProductCountByCategoryAsync(Guid categoryId);
+    Task<List<ProductCountListDto>> GetProductCountByCategoryAsync(Guid categoryId, DateTime? dateTime = null);
 
 
     // Update Items Quantity including "Counted"
     // "Quantity" automitcally calculated ?
-    Task UpdateProductCountByCategoryAsync(Guid categoryId);
+    Task AddProductCountAsync(List<AddProductCountDto> newCounts);
 
 
     // viewing inventory count

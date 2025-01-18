@@ -33,6 +33,7 @@ namespace trackventory_backend
       logger.Information("Serilog starting");
       logger.Information($"Total services: {builder.Services.Count}");
 
+
       // Add services to the container.
       builder.Services.AddControllers();
       // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle

@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using trackventory_backend.Dtos;
 using trackventory_backend.Repositories.Interfaces;
 
 namespace trackventory_backend.Controllers
@@ -9,9 +10,11 @@ namespace trackventory_backend.Controllers
   public class InventoryController : ControllerBase
   {
     private readonly IInventoryRepository _InventoryRepository;
+    private readonly ILogger<InventoryController> _logger;
 
-    public InventoryController(IInventoryRepository InventoryRepository) {
+    public InventoryController(IInventoryRepository InventoryRepository, ILogger<InventoryController> logger) {
       _InventoryRepository = InventoryRepository;
+      _logger = logger;
     }
 
     [Authorize]
@@ -29,11 +32,19 @@ namespace trackventory_backend.Controllers
     }
 
     [Authorize]
-    [HttpGet("ProductCount/{categoryId:guid}")]
-    public async Task<IActionResult> GetProductCountByCategory([FromRoute] Guid categoryId) {
-      var productCounts = await _InventoryRepository.GetProductCountByCategoryAsync(categoryId);
+    public async Task<IActionResult> GetProductCountByCategory([FromRoute] Guid categoryId, [FromQuery] DateTime? date) {
+      var productListCounts = await _InventoryRepository.GetProductCountByCategoryAsync(categoryId, date);
 
-      return Ok(productCounts);
+      return Ok(productListCounts);
+    }
+
+    [Authorize]
+    [HttpPost("ProductCount")]
+    public async Task<IActionResult> AddProductCounts([FromBody] List<AddProductCountDto> newCounts) {
+      _logger.LogInformation("NewCounts = {@NewCounts}", newCounts);
+      await _InventoryRepository.AddProductCountAsync(newCounts);
+
+      return Ok();
     }
 
 
