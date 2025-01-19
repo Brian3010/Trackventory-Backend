@@ -17,6 +17,7 @@ namespace trackventory_backend.Controllers
       _logger = logger;
     }
 
+    // /api/Inventory/categories
     [Authorize]
     [HttpGet("categories")]
     public async Task<IActionResult> GetAllCategories() {
@@ -24,6 +25,7 @@ namespace trackventory_backend.Controllers
       return Ok(categories);
     }
 
+    // /api/Inventory/product/{categoryId:guid}
     [Authorize]
     [HttpGet("product/{categoryId:guid}")]
     public async Task<IActionResult> GetProductsbyCategory([FromRoute] Guid categoryId) {
@@ -31,13 +33,16 @@ namespace trackventory_backend.Controllers
       return Ok(products);
     }
 
+    // /api/Inventory/product-count/{categoryId:guid}?date=
     [Authorize]
+    [HttpGet("product-count/{categoryId:guid}")]
     public async Task<IActionResult> GetProductCountByCategory([FromRoute] Guid categoryId, [FromQuery] DateTime? date) {
       var productListCounts = await _InventoryRepository.GetProductCountByCategoryAsync(categoryId, date);
 
       return Ok(productListCounts);
     }
 
+    // /api/Inventory/ProductCount
     [Authorize]
     [HttpPost("ProductCount")]
     public async Task<IActionResult> AddProductCounts([FromBody] List<AddProductCountDto> newCounts) {

@@ -26,6 +26,7 @@ namespace trackventory_backend.Repositories
       dateTime ??= DateTime.Now.Date;
 
       var products = await GetProductByCategoryAsync(categoryId);
+      _logger.LogInformation("products = {@products}", products);
 
       var productIds = products.Select(p => p.Id).ToList();
 
