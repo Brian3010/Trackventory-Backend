@@ -20,6 +20,7 @@ namespace trackventory_backend.Repositories.Interfaces
     // "Quantity" automitcally calculated ?
     Task AddProductCountAsync(List<AddProductCountDto> newCounts);
 
+    Task UpdateProductCountAsync(List<UpdateProductCountDto> UpdatedCounts);
 
     // viewing inventory count
 

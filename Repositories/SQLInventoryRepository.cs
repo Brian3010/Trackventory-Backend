@@ -61,7 +61,7 @@ namespace trackventory_backend.Repositories
         ProductId = nc.ProductId,
         Counted = nc.Counted,
         OnHand = nc.OnHand,
-        Quantity = nc.Quantity,
+        Quantity = nc.OnHand - nc.Counted,
         CountingReasonCode = nc.CountingReasonCode,
         UpdatedDate = DateTime.Now,
         //CountedBy =
@@ -73,6 +73,10 @@ namespace trackventory_backend.Repositories
 
       // Save changes
       await _trackventoryDbContext.SaveChangesAsync(); // run this
+    }
+
+    public async Task UpdateProductCountAsync(List<UpdateProductCountDto> UpdatedCounts) {
+      _logger.LogInformation("UpdatedCounts = {@updatedCoutns}", UpdatedCounts);
     }
   }
 }

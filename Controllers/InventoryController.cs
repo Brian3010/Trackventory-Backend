@@ -54,6 +54,26 @@ namespace trackventory_backend.Controllers
       return Ok();
     }
 
+    // /api/Inventory/ProductCount
+    [Authorize]
+    [HttpPut("ProductCount")]
+    public async Task<IActionResult> UpdateProductCounts([FromBody] List<UpdateProductCountDto> updatedCounts) {
+      _logger.LogInformation("UpdatedCounts = {@updatedCounts}", updatedCounts);
+
+      // if counted products not exist, return/redirect to AddProductCount
+      var productCounts = await _InventoryRepository.GetProductCountByCategoryAsync(updatedCounts.First().CategoryId);
+      _logger.LogInformation("productCounts = {@productCounts}", productCounts);
+
+      if (productCounts == null || productCounts.Count == 0) return NotFound("Seems like you are submiting new counts"); // redirect to AddProductCounts?
+
+
+      await _InventoryRepository.UpdateProductCountAsync(updatedCounts);
+
+      // Convert to Excel an send via Email
+
+      return Ok();
+    }
+
 
 
   }
