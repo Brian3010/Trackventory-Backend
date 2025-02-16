@@ -77,6 +77,34 @@ namespace trackventory_backend.Repositories
 
     public async Task UpdateProductCountAsync(List<UpdateProductCountDto> UpdatedCounts) {
       _logger.LogInformation("UpdatedCounts = {@updatedCoutns}", UpdatedCounts);
+
+
+      // Update counts
+      var products = await GetProductByCategoryAsync(UpdatedCounts.First().CategoryId);
+
+      // extract productId 
+      var productIds = products.Select(pc => pc.Id);
+
+      var dateTime = DateTime.Now.Date;
+
+      var productCounts = await _trackventoryDbContext.InventoryCount.Where(ic => productIds.Contains(ic.ProductId) && ic.UpdatedDate.Date == dateTime).ToListAsync();
+      _logger.LogInformation("productCounts = {@productCounts}", productCounts);
+
+
+      foreach (var p in productCounts) {
+        var update = UpdatedCounts.FirstOrDefault(u => u.ProductId == p.ProductId);
+        _logger.LogInformation("update = {@update}", update);
+
+        if (update != null) {
+
+          p.Counted = update.Counted;
+          p.Quantity = p.OnHand - update.Counted;
+        }
+      }
+
+
+      await _trackventoryDbContext.SaveChangesAsync();
+
     }
   }
 }
