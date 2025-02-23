@@ -22,6 +22,8 @@ namespace trackventory_backend.Repositories.Interfaces
 
     Task UpdateProductCountAsync(List<UpdateProductCountDto> UpdatedCounts);
 
+    Task<bool> IsCategory(Guid CategoryId);
+
     // viewing inventory count
 
     // Update new item

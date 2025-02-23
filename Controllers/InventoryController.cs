@@ -37,6 +37,8 @@ namespace trackventory_backend.Controllers
     [Authorize]
     [HttpGet("product-count/{categoryId:guid}")]
     public async Task<IActionResult> GetProductCountByCategory([FromRoute] Guid categoryId, [FromQuery] DateTime? date) {
+      _logger.LogInformation("categoryId = {@categoryId}", categoryId);
+
       var productListCounts = await _InventoryRepository.GetProductCountByCategoryAsync(categoryId, date);
 
       return Ok(productListCounts);
@@ -45,7 +47,13 @@ namespace trackventory_backend.Controllers
     // /api/Inventory/ProductCount
     [Authorize]
     [HttpPost("ProductCount")]
-    public async Task<IActionResult> AddProductCounts([FromBody] List<AddProductCountDto> newCounts) {
+    public async Task<IActionResult> AddProductCounts([FromQuery] Guid categoryId, [FromBody] List<AddProductCountDto> newCounts) {
+      _logger.LogInformation("categoryId = {@categoryId}", categoryId);
+
+      // if counted products not exist, return/redirect to AddProductCount
+      var productCounts = await _InventoryRepository.GetProductCountByCategoryAsync(categoryId);
+      _logger.LogInformation("productCounts = {@productCounts}", productCounts);
+      if (productCounts.Count > 0) return NotFound("Counts has been added today, try returning to Update Count or back to homepage");
 
       _logger.LogInformation("NewCounts = {@NewCounts}", newCounts);
       await _InventoryRepository.AddProductCountAsync(newCounts);

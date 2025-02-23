@@ -24,6 +24,8 @@ namespace trackventory_backend.Repositories
 
       // Get today's date if null
       dateTime ??= DateTime.Now.Date;
+      _logger.LogInformation("dateTime = {@dateTime}", dateTime);
+
 
       var products = await GetProductByCategoryAsync(categoryId);
       _logger.LogInformation("products = {@products}", products);
@@ -104,6 +106,14 @@ namespace trackventory_backend.Repositories
 
 
       await _trackventoryDbContext.SaveChangesAsync();
+
+    }
+
+    public async Task<bool> IsCategory(Guid CategoryId) {
+
+      var categories = await GetAllCategoriesAsync();
+
+      return categories.Exists(c => c.Id == CategoryId);
 
     }
   }
