@@ -45,11 +45,13 @@ namespace trackventory_backend.Controllers
     // /api/Inventory/ProductCount
     [Authorize]
     [HttpPost("ProductCount")]
-    public async Task<IActionResult> AddProductCounts([FromBody] List<AddProductCountDto> newCounts) { // Add and Update ?
+    public async Task<IActionResult> AddProductCounts([FromBody] List<AddProductCountDto> newCounts) {
+
       _logger.LogInformation("NewCounts = {@NewCounts}", newCounts);
       await _InventoryRepository.AddProductCountAsync(newCounts);
 
       // Convert to Excel an send via Email
+
 
       return Ok();
     }
