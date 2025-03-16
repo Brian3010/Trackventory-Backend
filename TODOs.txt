@@ -1,0 +1,8 @@
+﻿TODOs
+
+... Previous todos not saved :(
+
+## 16/03/25
+- Implementing ExcelConverter and save to local machine - DONE
+
+What's next: Send the generated excel file to via email
