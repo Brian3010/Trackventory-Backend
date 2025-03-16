@@ -1,7 +1,9 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using trackventory_backend.Dtos;
+using trackventory_backend.Models;
 using trackventory_backend.Repositories.Interfaces;
+using trackventory_backend.Services.Interfaces;
 
 namespace trackventory_backend.Controllers
 {
@@ -11,10 +13,12 @@ namespace trackventory_backend.Controllers
   {
     private readonly IInventoryRepository _InventoryRepository;
     private readonly ILogger<InventoryController> _logger;
+    private readonly IExcelConverter _excelConverter;
 
-    public InventoryController(IInventoryRepository InventoryRepository, ILogger<InventoryController> logger) {
+    public InventoryController(IInventoryRepository InventoryRepository, ILogger<InventoryController> logger, IExcelConverter excelConverter) {
       _InventoryRepository = InventoryRepository;
       _logger = logger;
+      _excelConverter = excelConverter;
     }
 
     // /api/Inventory/categories
@@ -44,7 +48,7 @@ namespace trackventory_backend.Controllers
       return Ok(productListCounts);
     }
 
-    // /api/Inventory/ProductCount
+    // POST: /api/Inventory/ProductCount
     [Authorize]
     [HttpPost("ProductCount")]
     public async Task<IActionResult> AddProductCounts([FromQuery] Guid categoryId, [FromBody] List<AddProductCountDto> newCounts) {
@@ -59,12 +63,28 @@ namespace trackventory_backend.Controllers
       await _InventoryRepository.AddProductCountAsync(newCounts);
 
       // Convert to Excel an send via Email
+      var counts = await _InventoryRepository.GetProductCountByCategoryAsync(categoryId);
+      // Map DTOs to InventoryCount entities
+      var inventoryCounts = counts.Select(nc => new InventoryCount {
+        Id = Guid.NewGuid(),
+        Product = nc.Product,
+        ProductId = nc.Product.Id,
+        Counted = nc.Counted,
+        OnHand = nc.OnHand,
+        Quantity = nc.OnHand - nc.Counted,
+        CountingReasonCode = nc.CountingReasonCode,
+        UpdatedDate = nc.UpdateDate,
+        CountedBy = Guid.NewGuid() // replace this with username
+      }).ToList();
+
+      await _excelConverter.GenerateExcelFileAsync(inventoryCounts);
+
 
 
       return Ok();
     }
 
-    // /api/Inventory/ProductCount
+    // PUT: /api/Inventory/ProductCount
     [Authorize]
     [HttpPut("ProductCount")]
     public async Task<IActionResult> UpdateProductCounts([FromBody] List<UpdateProductCountDto> updatedCounts) {

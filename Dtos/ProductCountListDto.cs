@@ -14,6 +14,8 @@ namespace trackventory_backend.Dtos
 
     public required string CountingReasonCode { get; set; }
 
+    public required DateTime UpdateDate { get; set; }
+
 
   }
 }

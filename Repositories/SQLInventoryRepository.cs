@@ -42,7 +42,8 @@ namespace trackventory_backend.Repositories
         Counted = p.Counted,
         Quantity = p.Quantity,
         CountingReasonCode = p.CountingReasonCode,
-        Product = p.Product
+        Product = p.Product,
+        UpdateDate = p.UpdatedDate
       }).ToList();
 
       return result;
