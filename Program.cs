@@ -73,6 +73,7 @@ namespace trackventory_backend
       builder.Services.AddScoped<ICustomCookieManager, CookieManager>();
       builder.Services.AddScoped<IInventoryRepository, SQLInventoryRepository>();
       builder.Services.AddScoped<IExcelConverter, ExcelConverter>();
+      builder.Services.AddScoped<IEmailService, EmailService>();
 
       // Add Identity system to the ASP.NET Core service container
       builder.Services.AddIdentityCore<IdentityUser>()

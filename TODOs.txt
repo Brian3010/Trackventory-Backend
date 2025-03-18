@@ -1,8 +1,16 @@
-﻿TODOs
+﻿# TODOs
 
 ... Previous todos not saved :(
 
 ## 16/03/25
-- Implementing ExcelConverter and save to local machine - DONE
+- Implemented ExcelConverter and save to local machine - DONE
 
 What's next: Send the generated excel file to via email
+
+
+## 19/03/25
+- Send the generated excel file to via email - Done (Partially)
+
+What's next:
+- Implement global error handler
+- Can start creating front end for all current APIs

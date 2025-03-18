@@ -14,11 +14,13 @@ namespace trackventory_backend.Controllers
     private readonly IInventoryRepository _InventoryRepository;
     private readonly ILogger<InventoryController> _logger;
     private readonly IExcelConverter _excelConverter;
+    private readonly IEmailService _emailService;
 
-    public InventoryController(IInventoryRepository InventoryRepository, ILogger<InventoryController> logger, IExcelConverter excelConverter) {
+    public InventoryController(IInventoryRepository InventoryRepository, ILogger<InventoryController> logger, IExcelConverter excelConverter, IEmailService emailService) {
       _InventoryRepository = InventoryRepository;
       _logger = logger;
       _excelConverter = excelConverter;
+      _emailService = emailService;
     }
 
     // /api/Inventory/categories
@@ -77,8 +79,10 @@ namespace trackventory_backend.Controllers
         CountedBy = Guid.NewGuid() // replace this with username
       }).ToList();
 
-      await _excelConverter.GenerateExcelFileAsync(inventoryCounts);
+      var excelFile = await _excelConverter.GenerateExcelFileAsync(inventoryCounts);
 
+      // Attach excelFile and send
+      await _emailService.SendInventoryCountEmailAsync("briannguyenwg@gmail.com", "testing", "Inventory count list", excelFile);
 
 
       return Ok();
