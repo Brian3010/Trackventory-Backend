@@ -12,5 +12,6 @@ What's next: Send the generated excel file to via email
 - Send the generated excel file to via email - Done (Partially)
 
 What's next:
+- gitignore the appsettin.json because commiting it resulting secret exposed
 - Implement global error handler
 - Can start creating front end for all current APIs
