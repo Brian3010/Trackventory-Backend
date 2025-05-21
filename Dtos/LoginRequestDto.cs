@@ -15,6 +15,9 @@ namespace trackventory_backend.Dtos
       get; set;
     }
 
+    [Required]
+    public required string DeviceId { get; set; }
+
 
   }
 }

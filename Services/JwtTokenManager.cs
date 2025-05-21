@@ -60,47 +60,67 @@ namespace trackventory_backend.Services
       return result.ToString();
     }
 
-    public async Task AddOrUpdateRefreshTokenAsync(string userId, string deviceId, string rfToken, DateTime expiration) {
-      var existingToken = await _dbContext.RefreshTokens
-        .FirstOrDefaultAsync(rf => rf.UserId == userId && rf.DeviceId == deviceId && !rf.IsRevoked);
+    public async Task<bool> IsRefreshTokenExists(string refreshToken, string deviceId, string deviceIpAddress, string userId) {
 
-      if (existingToken != null) {
-        // replace the old token with the new one
-        existingToken.Token = rfToken;
-        existingToken.Expiration = expiration;
-        existingToken.DeviceId = deviceId;
+      deviceId ??= "Unknown Device";
+
+      var foundToken = await _dbContext.RefreshTokens.FirstOrDefaultAsync(rf => rf.UserId == userId && rf.DeviceName == deviceId && rf.DeviceIpAddress == deviceIpAddress && !rf.IsRevoked);
+
+      return foundToken != null;
+    }
+
+    public async Task AddOrUpdateRefreshTokenAsync(string userId, string deviceId, string IpAddress, string rfToken, DateTime expiration) {
+
+      // Check if token exists with deviceName, deviceIpAddress, userId
+      if (await IsRefreshTokenExists(rfToken, deviceId, IpAddress, userId)) {
+        // Update
+        await UpdateRefreshToken(rfToken, deviceId, IpAddress, userId);
       } else {
-        // Add a new one
-        _dbContext.RefreshTokens.Add(new RefreshTokens {
-          UserId = userId,
-          DeviceId = deviceId,
-          Token = rfToken,
-          Expiration = expiration
-        });
+        // Store
+        await StoreRefreshToken(rfToken, deviceId, IpAddress, userId);
+      }
+    }
+
+    private async Task StoreRefreshToken(string refreshToken, string deviceName, string deviceIpAddress, string userId) {
+
+      _dbContext.RefreshTokens.Add(new RefreshTokens {
+        Id = new Guid(),
+        UserId = userId,
+        Token = refreshToken,
+        CreatedAt = DateTime.UtcNow,
+        ExpiredAt = DateTime.UtcNow.AddDays(7),
+        IsRevoked = false,
+        DeviceName = deviceName ??= "Unknown Device",
+        DeviceIpAddress = deviceIpAddress ?? "localhost",
+      });
+
+
+      await _dbContext.SaveChangesAsync();
+    }
+
+    public async Task UpdateRefreshToken(string refreshToken, string deviceName, string deviceIpAddress, string userId) {
+      var rfToken = await _dbContext.RefreshTokens.FirstOrDefaultAsync(r => r.DeviceName == deviceName && r.DeviceIpAddress == deviceIpAddress && r.UserId == userId && !r.IsRevoked);
+
+      if (rfToken != null) {
+        rfToken.Token = refreshToken;
+        rfToken.IsRevoked = false;
       }
       await _dbContext.SaveChangesAsync();
     }
 
 
-    public async Task<bool> ValidateRefreshTokenAsync(string userId, string deviceId, string token) {
-      var refreshToken = await _dbContext.RefreshTokens
-        .FirstOrDefaultAsync(rt =>
-            rt.UserId == userId &&
-            rt.DeviceId == deviceId &&
-            rt.Token == token);
+    public async Task RevokeRefreshTokenAsync(string refreshToken, string deviceName, string deviceIpAddress, string userId) {
+      // Find the token
+      var rfToken = await _dbContext.RefreshTokens.FirstOrDefaultAsync(r => r.DeviceName == deviceName && r.DeviceIpAddress == deviceIpAddress && r.UserId == userId && r.Token == refreshToken && !r.IsRevoked);
+      //_logger.LogInformation("rfToken: {rfToken}", rfToken);
 
-      return refreshToken != null && !refreshToken.IsRevoked && refreshToken.Expiration > DateTime.UtcNow;
 
-    }
-
-    public async Task RevokeRefreshTokenAsync(string userId, string deviceId) {
-      var refreshToken = await _dbContext.RefreshTokens
-        .FirstOrDefaultAsync(rt => rt.UserId == userId && rt.DeviceId == deviceId && !rt.IsRevoked);
-
-      if (refreshToken != null) {
-        refreshToken.IsRevoked = true;
-        await _dbContext.SaveChangesAsync();
+      if (rfToken != null) {
+        rfToken.IsRevoked = true;
+        rfToken.RevokedAt = DateTime.Now;
       }
+
+      await _dbContext.SaveChangesAsync();
     }
 
     public async Task RevokeAllTokensAsync(string userId) {
@@ -113,16 +133,6 @@ namespace trackventory_backend.Services
       }
 
       await _dbContext.SaveChangesAsync();
-    }
-
-    public async Task RevokeDeviceTokenAsync(string userId, string deviceId) {
-      var token = await _dbContext.RefreshTokens
-          .FirstOrDefaultAsync(rt => rt.UserId == userId && rt.DeviceId == deviceId);
-
-      if (token != null) {
-        token.IsRevoked = true;
-        await _dbContext.SaveChangesAsync();
-      }
     }
 
   }

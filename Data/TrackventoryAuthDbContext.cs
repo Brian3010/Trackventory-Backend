@@ -21,9 +21,9 @@ namespace trackventory_backend.Data
       // Configure foreign key relationship
       builder.Entity<RefreshTokens>()
         .HasOne(rt => rt.User)
-        .WithMany()
+        .WithMany(u => u.RefreshTokens)
         .HasForeignKey(rt => rt.UserId)
-        .OnDelete(DeleteBehavior.Cascade);
+         .OnDelete(DeleteBehavior.Cascade);
 
       // Add roles
       var adminRoleId = "04b15aeb-6e4a-4f1b-b385-f62377058a51";

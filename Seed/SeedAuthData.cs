@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Identity;
+using trackventory_backend.Models;
 
 namespace trackventory_backend.Seed
 {
@@ -6,7 +7,7 @@ namespace trackventory_backend.Seed
   {
     public static async Task InitializeAsync(IServiceProvider serviceProvider) {
       var roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-      var userManager = serviceProvider.GetRequiredService<UserManager<IdentityUser>>();
+      var userManager = serviceProvider.GetRequiredService<UserManager<ApplicationUser>>();
 
       // Define roles
       string[] roles = { "Admin", "Store-Manager", "Assistant-Manager", "Staff", "Viewer" };
@@ -19,25 +20,25 @@ namespace trackventory_backend.Seed
       }
 
       // Define default users
-      var admin = new IdentityUser {
+      var admin = new ApplicationUser {
         UserName = "admin@example.com",
         Email = "admin@example.com",
         EmailConfirmed = true
       };
 
-      var manager = new IdentityUser {
+      var manager = new ApplicationUser {
         UserName = "manager@example.com",
         Email = "manager@example.com",
         EmailConfirmed = true
       };
 
-      var staff = new IdentityUser {
+      var staff = new ApplicationUser {
         UserName = "staff@example.com",
         Email = "staff@example.com",
         EmailConfirmed = true
       };
 
-      var viewer = new IdentityUser {
+      var viewer = new ApplicationUser {
         UserName = "viewer@example.com",
         Email = "viewer@example.com",
         EmailConfirmed = true
@@ -50,7 +51,7 @@ namespace trackventory_backend.Seed
       await CreateUserAndAssignRole(userManager, viewer, "Viewer123!", "Viewer");
     }
 
-    private static async Task CreateUserAndAssignRole(UserManager<IdentityUser> userManager, IdentityUser user, string password, string role) {
+    private static async Task CreateUserAndAssignRole(UserManager<ApplicationUser> userManager, ApplicationUser user, string password, string role) {
       var existingUser = await userManager.FindByEmailAsync(user.Email);
       if (existingUser == null) {
         var createUserResult = await userManager.CreateAsync(user, password);

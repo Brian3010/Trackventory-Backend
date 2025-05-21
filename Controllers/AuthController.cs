@@ -1,7 +1,10 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using System.Web;
 using trackventory_backend.Dtos;
+using trackventory_backend.Helpers;
+using trackventory_backend.Models;
 using trackventory_backend.Services;
 using trackventory_backend.Services.Interfaces;
 
@@ -11,13 +14,13 @@ namespace trackventory_backend.Controllers
   [ApiController]
   public class AuthController : ControllerBase
   {
-    private readonly UserManager<IdentityUser> _userManager;
+    private readonly UserManager<ApplicationUser> _userManager;
     private readonly RoleManager<IdentityRole> _roleManager;
     private readonly JwtTokenManager _jwtTokenManager;
     private readonly ICustomCookieManager _cookieManager;
     private readonly ILogger<AuthController> _logger;
 
-    public AuthController(UserManager<IdentityUser> userManager, RoleManager<IdentityRole> roleManager, JwtTokenManager jwtTokenManager, ICustomCookieManager cookieManager, ILogger<AuthController> logger) {
+    public AuthController(UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager, JwtTokenManager jwtTokenManager, ICustomCookieManager cookieManager, ILogger<AuthController> logger) {
       _userManager = userManager;
       _roleManager = roleManager;
       _jwtTokenManager = jwtTokenManager;
@@ -34,7 +37,7 @@ namespace trackventory_backend.Controllers
       }
 
 
-      var newUser = new IdentityUser() {
+      var newUser = new ApplicationUser() {
         UserName = registerRequestDto.Email,
         Email = registerRequestDto.Email,
       };
@@ -57,31 +60,34 @@ namespace trackventory_backend.Controllers
       return Ok("Registered succesffully");
     }
 
-    [HttpGet("refresh-token")]
-    public async Task<IActionResult> RefreshAccessToken() {
-      var userId = _cookieManager.GetCookie("UserId");
-      var deviceId = _cookieManager.GetCookie("DeviceId");
+    [HttpPost("refresh-token")]
+    public async Task<IActionResult> RefreshAccessToken([FromBody] RefreshTokenRequestDto refreshTokenRequestDto) {
+
+      // IP Address
+      var ipAddress = IpHelper.GetClientIp(HttpContext);
+
+      //var userId = _cookieManager.GetCookie("UserId");
       var RfToken = _cookieManager.GetCookie("RfToken");
 
-      if (userId == null || deviceId == null || RfToken == null) return NotFound("Neccessary Cookies Not Found");
+
+      if (RfToken == null) return NotFound("Neccessary Cookies Not Found");
 
       // check valid token
-      var isTokenValid = await _jwtTokenManager.ValidateRefreshTokenAsync(userId, deviceId, RfToken);
+      if (!await _jwtTokenManager.IsRefreshTokenExists(RfToken, refreshTokenRequestDto.DeviceId, ipAddress, refreshTokenRequestDto.UserId)) {
+        return Unauthorized("Invalid Refresh Token");
+      }
 
-      if (!isTokenValid) return NotFound();
+      var user = await _userManager.FindByIdAsync(refreshTokenRequestDto.UserId);
+      if (user == null) return NotFound("User not exist");
 
-      // create new access token and refreshtoken and send back to the client
-      // Search for user
-      var user = await _userManager.FindByIdAsync(userId);
-      if (user == null) return NotFound("User Not Found");
       var roles = await _userManager.GetRolesAsync(user);
 
       var accessToken = _jwtTokenManager.GenerateJwtToken(user, roles.ToList());
-      var refreshToken = _jwtTokenManager.GenerateRefreshToken();
-      await _jwtTokenManager.AddOrUpdateRefreshTokenAsync(user.Id, deviceId, refreshToken, DateTime.Now.AddDays(15));
+      //var refreshToken = _jwtTokenManager.GenerateRefreshToken();
+      //await _jwtTokenManager.AddOrUpdateRefreshTokenAsync(user.Id, deviceId, refreshToken, DateTime.Now.AddDays(15));
 
-      int CookieExpiredTime = 10080; // 1 week
-      _cookieManager.AddCookie("RfToken", refreshToken, CookieExpiredTime);
+      //int CookieExpiredTime = 10080; // 1 week
+      //_cookieManager.AddCookie("RfToken", refreshToken, CookieExpiredTime);
 
       var response = new {
         AccessToken = accessToken,
@@ -105,20 +111,19 @@ namespace trackventory_backend.Controllers
       var roles = await _userManager.GetRolesAsync(user);
       //int TTLInMinutes = 5;
 
-      // Generate access token
+      // IP Address
+      var ipAddress = IpHelper.GetClientIp(HttpContext);
+
+      // Generate access token and refresh token
       var accessToken = _jwtTokenManager.GenerateJwtToken(user, roles.ToList());
-      // Generate refresh token
       var refreshToken = _jwtTokenManager.GenerateRefreshToken();
 
       // Store refreshtoken in db
-      var deviceId = _cookieManager.GetCookie("DeviceId") ?? Guid.NewGuid().ToString();
-      await _jwtTokenManager.AddOrUpdateRefreshTokenAsync(user.Id, deviceId, refreshToken, DateTime.Now.AddDays(15));
+      await _jwtTokenManager.AddOrUpdateRefreshTokenAsync(user.Id, loginRequest.DeviceId, ipAddress, refreshToken, DateTime.Now.AddDays(15));
 
       // Store refresh token in cookie
       int CookieExpiredTime = 10080; // 1 week
       _cookieManager.AddCookie("RfToken", refreshToken, CookieExpiredTime);
-      _cookieManager.AddCookie("DeviceId", deviceId, CookieExpiredTime);
-      _cookieManager.AddCookie("UserId", user.Id, CookieExpiredTime);
 
       // Create a response
       var response = new {
@@ -133,18 +138,86 @@ namespace trackventory_backend.Controllers
 
     [Authorize]
     [HttpPost("logout")]
-    public async Task<IActionResult> Logout() {
+    public async Task<IActionResult> Logout([FromBody] LogoutRequestDto logoutRequest) {
 
-      // revoke refresh token
-      var userId = _cookieManager.GetCookie("UserId");
-      var deviceId = _cookieManager.GetCookie("DeviceId");
+      /**
+        * revoke refresh token
+        * delete cookies
+        */
 
-      await _jwtTokenManager.RevokeRefreshTokenAsync(userId, deviceId);
+      // Refresh token from cookie
+      var refreshToken = Request.Cookies["RfToken"];
+      if (string.IsNullOrEmpty(refreshToken)) return Unauthorized("Refresh token not found");
+
+      // IP Address
+      var ipAddress = IpHelper.GetClientIp(HttpContext);
+
+      // Check if token exist before continure proceed
+      if (!await _jwtTokenManager.IsRefreshTokenExists(refreshToken, logoutRequest.DeviceName, ipAddress!, logoutRequest.UserId)) {
+        return Unauthorized("Refresh Token not exist.");
+      }
+
+      await _jwtTokenManager.RevokeRefreshTokenAsync(refreshToken, logoutRequest.DeviceName, ipAddress!, logoutRequest.UserId);
 
       // clear cookies
-      _cookieManager.DeleteCookie("RfToken");
+      Response.Cookies.Append("RfToken", "", new CookieOptions {
+        HttpOnly = true,
+        Secure = true,
+        SameSite = SameSiteMode.Strict,
+        Expires = DateTime.UtcNow.AddDays(-1), // Set expiration in the past
+      });
 
-      return Ok("Logout successfully");
+      return Ok("Logged out successfully.");
+    }
+
+
+    [HttpPost("reset-password")]
+    public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequestDto resetPasswordRequestDto) {
+      /*
+       * Find the user email in the database -> wait for confirmation email
+       * return not found user
+       * 
+       * replace password
+       */
+      var userEmail = resetPasswordRequestDto.UserEmail;
+
+      var user = await _userManager.FindByEmailAsync(userEmail);
+
+      if (user == null) {
+        return NotFound("User Not Found");
+      }
+
+      // Can decode from Frontend
+      var decodedToken = HttpUtility.UrlDecode(resetPasswordRequestDto.EmailToken);
+
+      var res = await _userManager.ResetPasswordAsync(user, decodedToken, resetPasswordRequestDto.NewPassword);
+
+      if (!res.Succeeded)
+        return BadRequest(res.Errors);
+
+      return Ok("Password has been reset successfully.");
+
+    }
+
+    [HttpPost("request-password-reset")]
+    public async Task<IActionResult> RequestPasswordReset([FromBody] string email) {
+
+      var user = await _userManager.FindByEmailAsync(email);
+      if (user == null) return NotFound("User not found");
+
+      var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+
+      var encodedToken = HttpUtility.UrlEncode(token);
+
+      /* //TODO: Will need to send a link via email asking user to fill a form and hit POST reset-password
+       * to reset password
+       * 
+       * For now, This API will send back the token to use for reseting password
+       */
+
+      return Ok(new { ResetToken = encodedToken });
+      ;
+
     }
 
 
