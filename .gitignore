@@ -6,3 +6,4 @@ obj/
 *.lock.json
 .vs/
 .env
+.appsettings.json

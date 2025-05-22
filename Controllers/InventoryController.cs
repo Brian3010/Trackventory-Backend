@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 using trackventory_backend.Dtos;
 using trackventory_backend.Models;
 using trackventory_backend.Repositories.Interfaces;
@@ -79,10 +80,13 @@ namespace trackventory_backend.Controllers
         CountedBy = Guid.NewGuid() // replace this with username
       }).ToList();
 
-      var excelFile = await _excelConverter.GenerateExcelFileAsync(inventoryCounts);
 
       // Attach excelFile and send
-      await _emailService.SendInventoryCountEmailAsync("briannguyenwg@gmail.com", "testing", "Inventory count list", excelFile);
+      var excelFile = await _excelConverter.GenerateExcelFileAsync(inventoryCounts);
+
+      var DateTimeNow = DateTime.Now.ToString("dd/MM/yyyy HH:mm");
+      var emailSubject = $"Inventory report on {DateTimeNow}";
+      await _emailService.SendInventoryCountEmailAsync("phucmap3010@gmail.com", emailSubject, $"Inventory Counted by {User.FindFirst(ClaimTypes.Name)?.Value}", excelFile);
 
 
       return Ok();
@@ -101,9 +105,27 @@ namespace trackventory_backend.Controllers
       if (productCounts == null || productCounts.Count == 0) return NotFound("Seems like you are submiting new counts"); // redirect to AddProductCounts?
 
 
-      await _InventoryRepository.UpdateProductCountAsync(updatedCounts);
 
-      // Convert to Excel an send via Email
+      var counts = await _InventoryRepository.GetProductCountByCategoryAsync(updatedCounts[0].CategoryId);
+      // Map DTOs to InventoryCount entities
+      var inventoryCounts = counts.Select(nc => new InventoryCount {
+        Id = Guid.NewGuid(),
+        Product = nc.Product,
+        ProductId = nc.Product.Id,
+        Counted = nc.Counted,
+        OnHand = nc.OnHand,
+        Quantity = nc.OnHand - nc.Counted,
+        CountingReasonCode = nc.CountingReasonCode,
+        UpdatedDate = nc.UpdateDate,
+        CountedBy = Guid.NewGuid() // replace this with username
+      }).ToList();
+
+      var excelFile = await _excelConverter.GenerateExcelFileAsync(inventoryCounts);
+
+      // Attach excelFile and send
+      var DateTimeNow = DateTime.Now.ToString("dd/MM/yyyy HH:mm");
+      var emailSubject = $"Inventory report updated on {DateTimeNow}";
+      await _emailService.SendInventoryCountEmailAsync("phucmap3010@gmail.com", emailSubject, $"Inventory Updated by {User.FindFirst(ClaimTypes.Name)?.Value}", excelFile);
 
       return Ok();
     }
