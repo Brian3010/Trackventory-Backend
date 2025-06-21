@@ -20,6 +20,18 @@ namespace trackventory_backend
     public static async Task Main(string[] args) {
       var builder = WebApplication.CreateBuilder(args);
 
+      // tell dot net to run on this port
+      //builder.WebHost.UseUrls("http://localhost:5018");
+
+      builder.Services.AddCors(options => {
+        options.AddPolicy("AllowFrontend", policy => {
+          policy.WithOrigins("http://localhost:3000") // your frontend URL
+                .AllowAnyHeader()
+                .AllowAnyMethod()
+                .AllowCredentials(); // required for cookies or auth headers
+        });
+      });
+
       // Add Serilog
       var logger = new LoggerConfiguration().WriteTo
         .Console(outputTemplate:
@@ -103,10 +115,16 @@ namespace trackventory_backend
 
       var app = builder.Build();
 
+      app.UseCors("AllowFrontend");
+
       // Configure the HTTP request pipeline.
       if (app.Environment.IsDevelopment()) {
         app.UseSwagger();
         app.UseSwaggerUI();
+      }
+
+      if (!app.Environment.IsDevelopment()) {
+        app.UseHttpsRedirection();
       }
 
       // Invoke the seed data -> run on the first build to seed users and roles
@@ -120,7 +138,6 @@ namespace trackventory_backend
         }
       }
 
-      app.UseHttpsRedirection();
 
       // Add middleware
       app.UseAuthentication(); // Enable authentication middleware

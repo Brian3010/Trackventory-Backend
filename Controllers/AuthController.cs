@@ -63,6 +63,8 @@ namespace trackventory_backend.Controllers
     [HttpPost("refresh-token")]
     public async Task<IActionResult> RefreshAccessToken([FromBody] RefreshTokenRequestDto refreshTokenRequestDto) {
 
+      _logger.LogInformation("refreshTokenRequestDto: {@refreshToken}", refreshTokenRequestDto);
+
       // IP Address
       var ipAddress = IpHelper.GetClientIp(HttpContext);
 
@@ -70,7 +72,7 @@ namespace trackventory_backend.Controllers
       var RfToken = _cookieManager.GetCookie("RfToken");
 
 
-      if (RfToken == null) return NotFound("Neccessary Cookies Not Found");
+      if (RfToken == null) return BadRequest("Neccessary Cookies Not Found");
 
       // check valid token
       if (!await _jwtTokenManager.IsRefreshTokenExists(RfToken, refreshTokenRequestDto.DeviceId, ipAddress, refreshTokenRequestDto.UserId)) {
@@ -105,7 +107,7 @@ namespace trackventory_backend.Controllers
 
       var user = await _userManager.FindByEmailAsync(loginRequest.Email);
       if (user == null || !await _userManager.CheckPasswordAsync(user, loginRequest.Password)) {
-        return Unauthorized("Invalid username or password");
+        return Unauthorized("Invalid email or password");
       }
 
       var roles = await _userManager.GetRolesAsync(user);
