@@ -6,6 +6,8 @@
 
     public required string Name { get; set; }
 
+    public required string IconMarkUp { get; set; }
+
     public required DateTime UpdatedDate { get; set; }
 
   }
