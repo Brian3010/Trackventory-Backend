@@ -16,9 +16,29 @@ namespace trackventory_backend.Repositories
       _logger = logger;
     }
 
-    public async Task<List<Category>> GetAllCategoriesAsync() {
-      return await _trackventoryDbContext.Category.ToListAsync();
+    public async Task<List<CategoryDto>> GetAllCategoriesAsync() {
+      var categories = await _trackventoryDbContext.Category.ToListAsync();
+
+      var result = await _trackventoryDbContext.Category
+    .Select(category => new CategoryDto {
+      Id = category.Id,
+      IconMarkUpHTML = category.IconMarkUp,
+      Name = category.Name,
+      TotalItems = category.Products.Count,
+      LastUpdated = category.Products
+            .SelectMany(p => p.InventoryCounts)
+            .OrderByDescending(sc => sc.UpdatedDate)
+            .Select(sc => sc.UpdatedDate) // select the latest updated tabe from the Inventory Count table
+            .FirstOrDefault(),
+      UpdatedDate = category.UpdatedDate
+    })
+    .ToListAsync();
+
+      return result;
     }
+
+
+
 
     public async Task<List<ProductCountListDto>> GetProductCountByCategoryAsync(Guid categoryId, DateTime? dateTime = null) {
 

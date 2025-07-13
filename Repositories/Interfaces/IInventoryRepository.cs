@@ -7,7 +7,7 @@ namespace trackventory_backend.Repositories.Interfaces
   {
 
     // List all category names and id
-    Task<List<Category>> GetAllCategoriesAsync();
+    Task<List<CategoryDto>> GetAllCategoriesAsync();
 
     // List Items - product id, product names, item number based on category
     Task<List<Product>> GetProductByCategoryAsync(Guid categoryId);
@@ -23,6 +23,10 @@ namespace trackventory_backend.Repositories.Interfaces
     Task UpdateProductCountAsync(List<UpdateProductCountDto> UpdatedCounts);
 
     Task<bool> IsCategory(Guid CategoryId);
+
+    //TODO: Get total of items in a category
+    //TODO: Last updated stock list for a category
+    //TODO: -> Might consider implementing category details (total items)
 
     // viewing inventory count
 
