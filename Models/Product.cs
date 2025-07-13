@@ -21,6 +21,7 @@
 
     // Navigation properties
     public Category Category { get; set; }
+    public List<InventoryCount> InventoryCounts { get; set; }
 
 
   }

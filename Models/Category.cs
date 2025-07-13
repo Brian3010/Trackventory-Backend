@@ -10,5 +10,7 @@
 
     public required DateTime UpdatedDate { get; set; }
 
+    // Navigation property
+    public List<Product> Products { get; set; }
   }
 }
