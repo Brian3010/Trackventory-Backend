@@ -104,7 +104,7 @@ namespace trackventory_backend.Controllers
 
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginRequestDto loginRequest) {
-
+      _logger.LogInformation("loginRequest: {0}", loginRequest);
       var user = await _userManager.FindByEmailAsync(loginRequest.Email);
       if (user == null || !await _userManager.CheckPasswordAsync(user, loginRequest.Password)) {
         return Unauthorized("Invalid email or password");

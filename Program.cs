@@ -22,10 +22,11 @@ namespace trackventory_backend
 
       // tell dot net to run on this port
       //builder.WebHost.UseUrls("http://localhost:5018");
+      builder.WebHost.UseUrls("http://0.0.0.0:5018");
 
       builder.Services.AddCors(options => {
         options.AddPolicy("AllowFrontend", policy => {
-          policy.WithOrigins("http://localhost:3000") // your frontend URL
+          policy.WithOrigins("http://localhost:3000", "http://192.168.0.219:3000") // your frontend URL
                 .AllowAnyHeader()
                 .AllowAnyMethod()
                 .AllowCredentials(); // required for cookies or auth headers
@@ -37,7 +38,7 @@ namespace trackventory_backend
         .Console(outputTemplate:
         "{NewLine}[{Timestamp:HH:mm}] {Message:lj}{NewLine}{Exception}")
         .MinimumLevel.Information()
-        .MinimumLevel.Override("Microsoft", Serilog.Events.LogEventLevel.Warning) // Suppress Microsoft logs below Warning
+        //.MinimumLevel.Override("Microsoft", Serilog.Events.LogEventLevel.Warning) // Suppress Microsoft logs below Warning
         .MinimumLevel.Override("System", Serilog.Events.LogEventLevel.Warning) // Suppress System logs below Warning
         .CreateLogger();
 
